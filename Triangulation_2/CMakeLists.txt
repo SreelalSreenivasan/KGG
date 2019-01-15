@@ -34,7 +34,7 @@ add_definitions(-DQT_NO_KEYWORDS)
 
 # The executable itself.
 add_executable( Constrained_Delaunay_triangulation_2
-  Constrained_Delaunay_triangulation_2.cpp)
+ Constrained_Delaunay_triangulation_2.cpp)
 target_link_libraries( Constrained_Delaunay_triangulation_2
   PRIVATE CGAL::CGAL CGAL::CGAL_Qt5 Qt5::Widgets)
 target_include_directories( Constrained_Delaunay_triangulation_2

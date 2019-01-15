@@ -47,6 +47,7 @@ private:
 
   CGAL::Qt::TriangulationGraphicsItem<Delaunay> * dgi;
   CGAL::Qt::VoronoiGraphicsItem<Delaunay> * vgi;
+  CGAL::Qt::TriangulationGraphicsItem<Delaunay> * gg;
 
   CGAL::Qt::TriangulationMovingPoint<Delaunay> * mp;
   CGAL::Qt::TriangulationConflictZone<Delaunay> * cz;
@@ -69,6 +70,8 @@ public Q_SLOTS:
   void on_actionShowDelaunay_toggled(bool checked);
 
   void on_actionShowVoronoi_toggled(bool checked);
+
+  void on_actionShowGabriel_toggled(bool checked);
 
   void on_actionInsertPoint_toggled(bool checked);
   
@@ -115,6 +118,15 @@ MainWindow::MainWindow()
   scene.addItem(vgi);
   vgi->hide();
 
+  //Add a graphicitem foor Gabriel edges
+  gg=new CGAL::Qt::TriangulationGraphicsItem<Delaunay>(&dt);
+
+  QObject::connect(this,SIGNAL(changed()),
+                   gg, SLOT(modelChanged()));
+  //gg->setEdgesPen(QPen(Qt::green,0,Qt::SolidLine,Qt::RoundCap,Qt::RoundJoin));
+  //scene.addItem(gg);
+  //gg->hide();
+
   // Setup input handlers. They get events before the scene gets them
   // and the input they generate is passed to the triangulation with 
   // the signal/slot mechanism    
@@ -152,7 +164,7 @@ MainWindow::MainWindow()
   ag->addAction(this->actionMovingPoint);
   ag->addAction(this->actionCircumcenter);
   ag->addAction(this->actionShowConflictZone);
-
+  //ag->addAction(this->)
   // Check two actions 
   this->actionInsertPoint->setChecked(true);
   this->actionShowDelaunay->setChecked(true);
@@ -257,7 +269,19 @@ MainWindow::on_actionShowDelaunay_toggled(bool checked)
   dgi->setVisibleEdges(checked);
 }
 
+void
+MainWindow::on_actionShowGabriel_toggled(bool checked)
+{
+    if(checked){
+        //std::cerr<<"Inside Gabriel"<<std::endl;
+        gg->setEdgesPen(QPen(Qt::green,0,Qt::SolidLine,Qt::RoundCap,Qt::RoundJoin));
+        //gg->set
+        scene.addItem(gg);
+    }else{
+        scene.removeItem(gg);
+    }
 
+}
 void
 MainWindow::on_actionShowVoronoi_toggled(bool checked)
 {
@@ -303,6 +327,7 @@ MainWindow::on_actionInsertRandomPoints_triggered()
   for(int i = 0; i < number_of_points; ++i){
     points.push_back(*pg++);
   }
+  std::cerr << "Delaunay " << std::endl;
   dt.insert(points.begin(), points.end());
   // default cursor
   QApplication::restoreOverrideCursor();
@@ -313,12 +338,14 @@ MainWindow::on_actionInsertRandomPoints_triggered()
 void
 MainWindow::on_actionLoadPoints_triggered()
 {
+
   QString fileName = QFileDialog::getOpenFileName(this,
 						  tr("Open Points file"),
 						  ".");
   if(! fileName.isEmpty()){
     open(fileName);
   }
+
 }
 
 
@@ -326,9 +353,9 @@ void
 MainWindow::open(QString fileName)
 {
   // wait cursor
+
   QApplication::setOverrideCursor(Qt::WaitCursor);
   std::ifstream ifs(qPrintable(fileName));
-  
   K::Point_2 p;
   std::vector<K::Point_2> points;
   while(ifs >> p) {

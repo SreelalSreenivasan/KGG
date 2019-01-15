@@ -51,6 +51,7 @@
    <addaction name="actionClear" />
    <addaction name="actionLoadPoints" />
    <addaction name="actionSavePoints" />
+   <addaction name="actionGabriel" />
   </widget>
   <widget class="QToolBar" name="toolBar" >
    <property name="windowTitle" >
@@ -66,6 +67,7 @@
    <addaction name="actionShowRegular" />
    <addaction name="actionShowPowerdiagram" />
    <addaction name="actionRecenter" />
+   <addaction name="actionShowGabriel" />
   </widget>
   <widget class="QMenuBar" name="menubar" >
    <property name="geometry" >
@@ -82,6 +84,7 @@
     </property>
     <addaction name="separator" />
     <addaction name="actionClear" />
+    <addaction name="actionGabriel" />
     <addaction name="actionLoadPoints" />
     <addaction name="actionSavePoints" />
     <addaction name="separator" />
@@ -99,6 +102,7 @@
     </property>
     <addaction name="actionInsertPoint" />
     <addaction name="actionShowRegular" />
+    
     <addaction name="actionShowPowerdiagram" />
     <addaction name="separator" />
     <addaction name="actionRecenter" />
@@ -179,6 +183,24 @@
    </property>
    <property name="text" >
     <string>Show &amp;Voronoi Diagram</string>
+   </property>
+   <property name="shortcut" >
+    <string>Ctrl+V</string>
+   </property>
+  </action>
+  <action name="actionShowGabriel" >
+   <property name="checkable" >
+    <bool>true</bool>
+   </property>
+   <property name="checked" >
+    <bool>false</bool>
+   </property>
+   <property name="icon" >
+    <iconset resource="../icons/Triangulation_2.qrc" >
+     <normaloff>:/cgal/Triangulation_2/Voronoi_diagram_2.png</normaloff>:/cgal/Triangulation_2/Voronoi_diagram_2.png</iconset>
+   </property>
+   <property name="text" >
+    <string>Show &amp;Gabriel Edges</string>
    </property>
    <property name="shortcut" >
     <string>Ctrl+V</string>

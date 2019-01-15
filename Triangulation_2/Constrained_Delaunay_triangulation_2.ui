@@ -52,6 +52,7 @@
    <addaction name="actionClear"/>
    <addaction name="actionLoadConstraints"/>
    <addaction name="actionSaveConstraints"/>
+   <addaction name="actionGabriel" />
   </widget>
   <widget class="QToolBar" name="toolBar">
    <property name="windowTitle">
@@ -66,6 +67,7 @@
    <addaction name="actionInsertPolyline"/>
    <addaction name="separator"/>
    <addaction name="actionShowDelaunay"/>
+   <addaction name="actionGabriel" />
    <addaction name="actionShow_constrained_edges"/>
    <addaction name="actionShowVoronoi"/>
    <addaction name="actionShow_faces_in_domain"/>
@@ -88,6 +90,7 @@
     </property>
     <addaction name="separator" />
     <addaction name="actionClear" />
+    <addaction name="actionGabriel" />
     <addaction name="actionLoadConstraints" />
     <addaction name="actionSaveConstraints" />
     <addaction name="actionExport_SVG"/>
@@ -128,10 +131,12 @@
     <addaction name="actionMakeLipschitzDelaunayMesh"/>
     <addaction name="separator"/>
     <addaction name="actionLloyd_optimization"/>
+    <addaction name="actionGabriel" />
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
    <addaction name="menuTools"/>
+   <addaction name="actionGabriel" />
   </widget>
   <action name="actionAbout">
    <property name="text">

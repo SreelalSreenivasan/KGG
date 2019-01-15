@@ -46,7 +46,7 @@ private:
 
   CGAL::Qt::RegularTriangulationGraphicsItem<Regular> * dgi;
   CGAL::Qt::PowerdiagramGraphicsItem<Regular> * vgi;
-
+  CGAL::Qt::RegularTriangulationGraphicsItem<Regular> *gg;
   CGAL::Qt::RegularTriangulationRemoveVertex<Regular> * trv;
   CGAL::Qt::GraphicsViewCircleInput<K> * pi;
 public:
@@ -61,6 +61,8 @@ public Q_SLOTS:
   void on_actionShowPowerdiagram_toggled(bool checked);
 
   void on_actionInsertPoint_toggled(bool checked);
+
+  void on_actionShowGabriel_toggled(bool checked);
   
   void on_actionInsertRandomPoints_triggered();
 
@@ -71,6 +73,8 @@ public Q_SLOTS:
   void on_actionClear_triggered();
 
   void on_actionRecenter_triggered();
+
+  //void on_actionShowGabriel_triggered();
 
 
 Q_SIGNALS:
@@ -102,6 +106,13 @@ MainWindow::MainWindow()
   scene.addItem(vgi);
   vgi->hide();
 
+
+  //Add a graphicitem foor Gabriel edges
+  gg=new CGAL::Qt::RegularTriangulationGraphicsItem<Regular>(&dt);
+
+  QObject::connect(this,SIGNAL(changed()),
+                   gg, SLOT(modelChanged()));
+  gg->setEdgesPen(QPen(Qt::green,0,Qt::SolidLine,Qt::RoundCap,Qt::RoundJoin));
   // Setup input handlers. They get events before the scene gets them
   // and the input they generate is passed to the triangulation with 
   // the signal/slot mechanism    
@@ -198,6 +209,22 @@ MainWindow::on_actionShowPowerdiagram_toggled(bool checked)
   vgi->setVisible(checked);
 }
 
+void
+MainWindow::on_actionShowGabriel_toggled(bool checked)
+{
+    if(checked){
+        std::cerr<<"Inside Gabriel"<<std::endl;
+    }
+}
+/*void
+MainWindow::on_actionShowGabriel_triggered()
+{
+
+        std::cerr<<"Inside Gabriel"<<std::endl;
+        //scene.addItem(gg);
+        //gg->setVisibleEdges(checked);
+
+}*/
 
 void
 MainWindow::on_actionClear_triggered()
@@ -250,6 +277,7 @@ MainWindow::on_actionLoadPoints_triggered()
     while(ifs >> p) {
       points.push_back(p);
     }
+    std::cerr << "Regular " << std::endl;
     dt.insert(points.begin(), points.end());
 
     actionRecenter->trigger();
