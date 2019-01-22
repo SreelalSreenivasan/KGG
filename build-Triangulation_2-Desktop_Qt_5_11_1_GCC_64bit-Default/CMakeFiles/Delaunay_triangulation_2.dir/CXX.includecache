@@ -5335,9 +5335,15 @@ CGAL/Kernel/Wutils.h
 /home/sreelal/Desktop/KGG/Triangulation_2/Delaunay_triangulation_2.cpp
 fstream
 -
+thread
+-
+chrono
+-
 CGAL/Exact_predicates_inexact_constructions_kernel.h
 -
 CGAL/Delaunay_triangulation_2.h
+-
+CGAL/Qt/Converter.h
 -
 CGAL/point_generators_2.h
 -
@@ -5350,6 +5356,10 @@ QActionGroup
 QFileDialog
 -
 QInputDialog
+-
+QLineF
+-
+QPointF
 -
 TriangulationCircumcircle.h
 /home/sreelal/Desktop/KGG/Triangulation_2/TriangulationCircumcircle.h

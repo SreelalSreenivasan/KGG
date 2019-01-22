@@ -1,9 +1,11 @@
 #include <fstream>
+#include <thread>
+#include <chrono>
 
 // CGAL headers
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Delaunay_triangulation_2.h>
-
+#include <CGAL/Qt/Converter.h>
 #include <CGAL/point_generators_2.h>
 
 // Qt headers
@@ -12,6 +14,8 @@
 #include <QActionGroup>
 #include <QFileDialog>
 #include <QInputDialog>
+#include <QLineF>
+#include <QPointF>
 
 // GraphicsView items and event filters (input classes)
 #include "TriangulationCircumcircle.h"
@@ -44,10 +48,18 @@ class MainWindow :
 private:  
   Delaunay dt; 
   QGraphicsScene scene;  
+  QGraphicsLineItem *qline[50];
+  QPointF p1,p2;
+  Point_2 x,y;
 
+
+  std::vector<Point_2> g_points;
   CGAL::Qt::TriangulationGraphicsItem<Delaunay> * dgi;
   CGAL::Qt::VoronoiGraphicsItem<Delaunay> * vgi;
   CGAL::Qt::TriangulationGraphicsItem<Delaunay> * gg;
+
+
+
 
   CGAL::Qt::TriangulationMovingPoint<Delaunay> * mp;
   CGAL::Qt::TriangulationConflictZone<Delaunay> * cz;
@@ -96,6 +108,13 @@ MainWindow::MainWindow()
   : DemosMainWindow()
 {
   setupUi(this);
+
+  for(int i=0;i<50;i++)
+  {
+      qline[i]=new QGraphicsLineItem();
+      qline[i]->setPen(QPen(Qt::green,0,Qt::SolidLine,Qt::RoundCap,Qt::RoundJoin));
+      qline[i]->hide();
+  }
 
   this->graphicsView->setAcceptDrops(false);
 
@@ -272,13 +291,36 @@ MainWindow::on_actionShowDelaunay_toggled(bool checked)
 void
 MainWindow::on_actionShowGabriel_toggled(bool checked)
 {
+    CGAL::Qt::Converter<K> convert(Point_2);
+
     if(checked){
+        std::vector<Point_2> result;
+
+        //qreal x1=250,x2=150,y1=600,y2=450;
         //std::cerr<<"Inside Gabriel"<<std::endl;
-        gg->setEdgesPen(QPen(Qt::green,0,Qt::SolidLine,Qt::RoundCap,Qt::RoundJoin));
-        //gg->set
-        scene.addItem(gg);
+        //gg->setEdgesPen(QPen(Qt::green,0,Qt::SolidLine,Qt::RoundCap,Qt::RoundJoin));
+        //scene.addLine(x1,y1,x2,y2,QPen(Qt::green,0,Qt::SolidLine,Qt::RoundCap,Qt::RoundJoin));
+        //scene.addItem(gg);
+        //scene.addItem(qline);
+        //int x=points.size();
+        //std::cerr<<"Inside Gabriel:"<<x<<std::endl;
+        int j=0;
+        for(int i=0;i<g_points.size()-1;)
+        {
+
+            std::cerr<<g_points.at(i).x()<<g_points.at(i).y()<<"\n"<<g_points.at(i+1).x()<<g_points.at(i+1).y()<<j<<std::endl;
+            //QPointF x=convert(g_points.at(i));
+            scene.addItem(qline[j]);
+            qline[j]->setLine(g_points.at(i).x(),g_points.at(i).y(),g_points.at(i+1).x(),g_points.at(i+1).y());
+            qline[j]->show();
+            i=i+2;j++;
+
+
+
+        }
     }else{
-        scene.removeItem(gg);
+        //scene.removeItem(qline);
+
     }
 
 }
@@ -325,8 +367,10 @@ MainWindow::on_actionInsertRandomPoints_triggered()
   std::vector<Point_2> points;
   points.reserve(number_of_points);
   for(int i = 0; i < number_of_points; ++i){
-    points.push_back(*pg++);
+    points.push_back(*pg);
+
   }
+
   std::cerr << "Delaunay " << std::endl;
   dt.insert(points.begin(), points.end());
   // default cursor
@@ -362,7 +406,11 @@ MainWindow::open(QString fileName)
     // ignore whatever comes after x and y
     ifs.ignore((std::numeric_limits<std::streamsize>::max)(), '\n'); 
     points.push_back(p);
+    g_points.push_back(p);
   }
+  //int x=g_points.size();
+
+
   dt.insert(points.begin(), points.end());
 
   // default cursor
