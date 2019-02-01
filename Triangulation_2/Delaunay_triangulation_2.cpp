@@ -57,6 +57,7 @@ private:
   Delaunay dt;
   QGraphicsScene scene;
   QGraphicsLineItem *qline[50];
+  QGraphicsLineItem *qline1[50];
   QPointF p1,p2;
   Point_2 x,y;
   int j=0;
@@ -126,8 +127,14 @@ MainWindow::MainWindow()
   for(int i=0;i<50;i++)
   {
       qline[i]=new QGraphicsLineItem();
-      qline[i]->setPen(QPen(Qt::darkRed,0,Qt::SolidLine,Qt::RoundCap,Qt::RoundJoin));
+      qline[i]->setPen(QPen(Qt::darkGreen,0,Qt::SolidLine,Qt::RoundCap,Qt::RoundJoin));
       qline[i]->hide();
+  }
+  for(int i=0;i<50;i++)
+  {
+      qline1[i]=new QGraphicsLineItem();
+      qline1[i]->setPen(QPen(Qt::black,0,Qt::SolidLine,Qt::RoundCap,Qt::RoundJoin));
+      qline1[i]->hide();
   }
 
   this->graphicsView->setAcceptDrops(false);
@@ -384,20 +391,27 @@ MainWindow::on_actionShowGabriel_toggled(bool checked)
             flag=false;
 
         }
+        //dt.clear();
+        //dt.insert(g_points1.begin(),g_points1.end());
+        std::cerr<<"Number of Gabriel Edges:"<<edge_vect2.size()<<std::endl;
         dt.clear();
-        dt.insert(g_points1.begin(),g_points1.end());
+
+        for(int i=0;i<edge_vect.size();i++)
+        {
+            scene.addItem(qline1[i]);
+            qline1[i]->setLine(edge_vect[i].first.x(),edge_vect[i].first.y(),edge_vect[i].second.x(),edge_vect[i].second.y());
+            qline1[i]->show();
+        }
         for(int i=0;i<edge_vect2.size();i++)
         {
-            //v1=dt.insert(Point(edge_vect2[i].first));
-            //v2=dt.insert(Point(edge_vect2[i].second));
-            //dt.remove(v1);
-            //dt.remove(v2);
 
-
-            std::cerr<<edge_vect2[i].first<<edge_vect2[i].second<<std::endl;
+            std::cerr<<edge_vect2[i].first<<" "<<edge_vect2[i].second<<std::endl;
             scene.addItem(qline[i]);
             qline[i]->setLine(edge_vect2[i].first.x(),edge_vect2[i].first.y(),edge_vect2[i].second.x(),edge_vect2[i].second.y());
             qline[i]->show();
+
+
+
         }
     }else{
         for(int i=0;i<edge_vect2.size();i++)
