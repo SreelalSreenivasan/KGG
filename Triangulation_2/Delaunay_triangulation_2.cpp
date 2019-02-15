@@ -1,7 +1,7 @@
 #include <fstream>
 #include <thread>
 #include <chrono>
-
+#include <cmath>
 
 // CGAL headers
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
@@ -12,6 +12,11 @@
 #include <CGAL/Circle_2.h>
 #include <CGAL/enum.h>
 #include <CGAL/number_utils.h>
+#include <CGAL/Cartesian.h>
+#include <CGAL/Exact_rational.h>
+#include <CGAL/Arr_circle_segment_traits_2.h>
+#include <CGAL/Arrangement_2.h>
+
 
 
 // Qt headers
@@ -22,6 +27,8 @@
 #include <QInputDialog>
 #include <QLineF>
 #include <QPointF>
+#include <QPen>
+#include <QGraphicsEllipseItem>
 
 // GraphicsView items and event filters (input classes)
 #include "TriangulationCircumcircle.h"
@@ -47,6 +54,13 @@ typedef CGAL::Delaunay_triangulation_2<K> Delaunay;
 
 typedef Delaunay::Point Point;
 
+// typedef CGAL::Cartesian<CGAL::Exact_rational>   kernal;
+//typedef kernal::Circle_2    circle;
+//typedef K::Circle_2         circle;
+//typedef CGAL::Arr_circle_segment_traits_2<K>   traits;
+//typedef traits::Curve_2     curve;
+//typedef CGAL::Arrangement_2<traits>     Arrangement;
+
 class MainWindow :
   public CGAL::Qt::DemosMainWindow,
   public Ui::Delaunay_triangulation_2
@@ -56,9 +70,11 @@ class MainWindow :
 private:
   Delaunay dt;
   QGraphicsScene scene;
-  QGraphicsLineItem *qline[50];
-  QGraphicsLineItem *qline1[50];
-  QPointF p1,p2;
+  QGraphicsLineItem *qline[500];
+  QGraphicsLineItem *qline1[500];
+  QGraphicsEllipseItem *ellipse[500];
+  QPoint *p1;
+
   Point_2 x,y;
   int j=0;
 
@@ -75,6 +91,9 @@ private:
 
 
 
+
+
+
   CGAL::Qt::TriangulationMovingPoint<Delaunay> * mp;
   CGAL::Qt::TriangulationConflictZone<Delaunay> * cz;
   CGAL::Qt::TriangulationRemoveVertex<Delaunay> * trv;
@@ -87,6 +106,10 @@ public:
 public Q_SLOTS:
 
   void processInput(CGAL::Object o);
+
+  void compute_gabriel();
+
+  void draw_circle(Point_2,Point_2);
 
   void on_actionMovingPoint_toggled(bool checked);
 
@@ -124,20 +147,24 @@ MainWindow::MainWindow()
 {
   setupUi(this);
 
-  for(int i=0;i<50;i++)
+  for(int i=0;i<500;i++)
   {
       qline[i]=new QGraphicsLineItem();
-      qline[i]->setPen(QPen(Qt::darkGreen,0,Qt::SolidLine,Qt::RoundCap,Qt::RoundJoin));
+      qline[i]->setPen(QPen(Qt::green,0,Qt::SolidLine,Qt::RoundCap,Qt::RoundJoin));
       qline[i]->hide();
   }
-  for(int i=0;i<50;i++)
+  for(int i=0;i<500;i++)
   {
       qline1[i]=new QGraphicsLineItem();
       qline1[i]->setPen(QPen(Qt::black,0,Qt::SolidLine,Qt::RoundCap,Qt::RoundJoin));
       qline1[i]->hide();
   }
 
+
   this->graphicsView->setAcceptDrops(false);
+
+  // Settings for drawing ellipse
+
 
   // Add a GraphicItem for the Delaunay triangulation
   dgi = new CGAL::Qt::TriangulationGraphicsItem<Delaunay>(&dt);
@@ -309,107 +336,135 @@ MainWindow::on_actionShowDelaunay_toggled(bool checked)
   dgi->setVisibleEdges(checked);
 }
 
+
+//Darw circle: QPainter way
+void
+MainWindow::draw_circle(Point_2 c1,Point_2 c2)
+{
+    QPainter qp(this);
+    double r=std::sqrt(std::pow(c1.x()-c2.x(),2)+std::pow(c1.y()-c2.y(),2));
+    double x=0;
+    double y=r;
+    double p;
+    double xc=c1.x();
+    double yc=c1.y();
+
+    p1=new QPoint(xc+x,yc-y);
+
+    qp.drawPoint(xc+x,yc-y);
+    qp.setPen(QPen(Qt::red,5,Qt::DashDotLine));
+    p=1-r;
+    for(x=0;x<=y;x++)
+        {
+            if(p<0)
+            {
+                y=y;
+                p=(p+(2*x)+3);
+            }
+            else
+            {
+                y=y-1;
+                p=p+((2*(x-y))+5);
+            }
+            qp.drawPoint(xc+x,yc-y);
+            qp.drawPoint(xc-x,yc-y);
+            qp.drawPoint(xc+x,yc+y);
+            qp.drawPoint(xc-x,yc+y);
+            qp.drawPoint(xc+y,yc-x);
+            qp.drawPoint(xc-y,yc-x);
+            qp.drawPoint(xc+y,yc+x);
+            qp.drawPoint(xc-y,yc+x);
+        }
+
+}
 void
 MainWindow::on_actionShowGabriel_toggled(bool checked)
 {
-    //CGAL::Qt::Converter<K> convert(Point_2);
     Point_2 c;
-    bool flag=false;
-    Delaunay::Vertex_handle v1;
-    Delaunay::Vertex_handle v2;
-    if(checked){
-        //j=0;
-        //qreal x1=250,x2=150,y1=600,y2=450;
-        //std::cerr<<"Inside Gabriel"<<std::endl;
-        //gg->setEdgesPen(QPen(Qt::green,0,Qt::SolidLine,Qt::RoundCap,Qt::RoundJoin));
-        //scene.addLine(x1,y1,x2,y2,QPen(Qt::green,0,Qt::SolidLine,Qt::RoundCap,Qt::RoundJoin));
-        //scene.addItem(gg);
-        //scene.addItem(qline);
-        //int x=points.size();
-        //std::cerr<<"Inside Gabriel:"<<x<<std::endl;
+    QTransform transform;
+    if(checked)
+    {
+        //transform.translate(50,50);
+        /*QPen pen;
+        pen.setColor(QColor(Qt::red));
+        pen.setWidth(5);
+        Point_2 c1=Point_2(250,300);
+        Point_2 c2=Point_2(400,500);
+        CGAL::Exact_rational sq=CGAL::Exact_rational(100);
+        circle cir=circle(c1,c2,CGAL::CLOCKWISE);
+        curve cv=curve(cir);
 
-        for(int i=0;i<g_points1.size();i++)
-        {
-            for(int j=0;j<g_points2.size();j++)
-            {
+        //Arrangement arr;
+
+        //insert(arr,cv);
+
+        QPainter p(this);
+        QRect r(10,10,100,100);
+        p.setPen(pen);
+        //r.moveCenter()
+        p.drawEllipse(r);
+        /*ellipse=new QGraphicsEllipseItem(10,10,100,100);
+        scene.addItem(ellipse);
+        ellipse->show();*/
 
 
-
-            /*for(j=0;j<i;j++)
-            {
-            std::cerr<<g_points.at(i).x()<<g_points.at(i).y()<<"\n"<<g_points.at(i+1).x()<<g_points.at(i+1).y()<<j<<std::endl;
-            QPointF x=convert(g_points.at(i));
-            scene.addItem(qline[j]);
-            qline[j]->setLine(g_points.at(i).x(),g_points.at(i).y(),g_points.at(i+1).x(),g_points.at(i+1).y());
-            qline[j]->show();*/
-
-            v1=dt.insert(Point(g_points1.at(i)));
-            v2=dt.insert(Point(g_points2.at(j)));
-            bool check=dt.is_edge(v1,v2);
-                if(check)
-                {
-                    edge_vect.push_back(std::make_pair(g_points1.at(i),g_points2.at(j)));
-                }
-
-            }
-            g_points2.erase(g_points2.begin());
-        }
-        for(int i=0;i<edge_vect.size();i++)
-        {
-            Point_2 a=edge_vect[i].first;
-            Point_2 b=edge_vect[i].second;
-            //std::cerr<<a<<" "<<b<<std::endl;
-            double x1=a.x();double y1=a.y();double x2=b.x();double y2=b.y();
-            double dist=std::sqrt(std::pow(x1-x2,2)+std::pow(y1-y2,2));
-            c=Point_2((a.x()+b.x())/2,(a.y()+b.y())/2);
-            for(int k=0;k<g_points1.size();)
-            {
-                if(g_points1.at(k)==a||g_points1.at(k)==b)
-                {
-                  k++;
-                }
-                else
-                {
-                    x2=g_points1.at(k).x();
-                    y2=g_points1.at(k).y();
-                    double dist2=std::sqrt(std::pow(c.x()-x2,2)+std::pow(c.y()-y2,2));
-                    if(dist2<=dist)
-                    {
-                        flag=true;
-                        break;
-                    }
-                    k++;
-                }
-            }
-            if(!flag)
-                edge_vect2.push_back(std::make_pair(a,b));
-            //double c=CGAL::squared_distance(a,b);
-            //std::cerr<<a<<" "<<b<<":"<<c<<std::endl;
-            //std::cerr<<dist/2<<std::endl;
-            //CGAL::Orientation ori=CGAL::COUNTERCLOCKWISE;
-            //CGAL::Circle_2<K> c1=CGAL::Circle_2(a,b,ori);
-            flag=false;
-
-        }
-        //dt.clear();
-        //dt.insert(g_points1.begin(),g_points1.end());
-        std::cerr<<"Number of Gabriel Edges:"<<edge_vect2.size()<<std::endl;
-        dt.clear();
-
-        for(int i=0;i<edge_vect.size();i++)
-        {
-            scene.addItem(qline1[i]);
-            qline1[i]->setLine(edge_vect[i].first.x(),edge_vect[i].first.y(),edge_vect[i].second.x(),edge_vect[i].second.y());
-            qline1[i]->show();
-        }
         for(int i=0;i<edge_vect2.size();i++)
         {
 
             std::cerr<<edge_vect2[i].first<<" "<<edge_vect2[i].second<<std::endl;
+            //Gabriel edges are coloured green
             scene.addItem(qline[i]);
             qline[i]->setLine(edge_vect2[i].first.x(),edge_vect2[i].first.y(),edge_vect2[i].second.x(),edge_vect2[i].second.y());
             qline[i]->show();
+            //c=Point_2((edge_vect2[i].first.x()+edge_vect2[i].second.x())/2,(edge_vect2[i].first.y()+edge_vect2[i].second.y())/2);
+            //Draw circle: Qt way, and it works
+            double twopi=6.2830853071795865;
+            double rad=57.2957795130823209;
+            double dist=std::sqrt(std::pow(edge_vect2[i].first.x()-edge_vect2[i].second.x(),2)+std::pow(edge_vect2[i].first.y()-edge_vect2[i].second.y(),2));
+            double m=(edge_vect2[i].second.y()-edge_vect2[i].first.y())/(edge_vect2[i].second.x()-edge_vect2[i].first.x());
+            double theta= std::atan(m);
+            if(edge_vect2[i].first.y()==edge_vect2[i].second.y())
+                ellipse[i]=new QGraphicsEllipseItem(edge_vect2[i].first.x(),edge_vect2[i].first.y()-(dist/2),dist,dist);
+            else if(edge_vect2[i].first.x()==edge_vect2[i].second.x())
+                ellipse[i]=new QGraphicsEllipseItem(edge_vect2[i].second.x()-(dist/2),edge_vect2[i].second.y(),dist,dist);
+            else
+            {
+                if(theta<0)
+                {
+                    //theta+=twopi;
+                    //theta*=rad;
+                    ellipse[i]=new QGraphicsEllipseItem(edge_vect2[i].second.x()-(dist/2),edge_vect2[i].second.y()-(dist),dist,dist);
+                    std::cerr<<"If 1"<<std::endl;
+                    std::cerr<<theta<<std::endl;
+                    //std::cerr<<edge_vect2[i].first<<" "<<edge_vect2[i].second<<std::endl;
+                }
+                else
+                {
 
+                    ellipse[i]=new QGraphicsEllipseItem(edge_vect2[i].first.x()-(dist),edge_vect2[i].first.y()-(dist/2),dist,dist);
+                    std::cerr<<"If 3"<<std::endl;
+                    std::cerr<<theta<<std::endl;
+                }
+             }
+
+            //double m=(edge_vect2[i].first.y())/(edge_vect2[i].first.x());
+
+            //theta=theta+60;
+
+
+            //ellipse[i]->setStartAngle(theta);
+            //transform.rotate(theta);
+            //ellipse[i]->setTransform(transform);
+            //ellipse[i]->setRotation(theta);
+
+            //ellipse[i]=new QGraphicsEllipseItem();
+            //std::cerr<<edge_vect2[i].first<<" "<<edge_vect2[i].second;
+            //double dist=std::sqrt(std::pow(edge_vect2[i].first.x()-edge_vect2[i].second.x(),2)+std::pow(edge_vect2[i].first.y()-edge_vect2[i].second.y(),2));
+
+
+            scene.addItem(ellipse[i]);
+            ellipse[i]->show();
+            //draw_circle(c,edge_vect2[i].first);
 
 
         }
@@ -489,7 +544,80 @@ MainWindow::on_actionLoadPoints_triggered()
 
 }
 
+void
+MainWindow::compute_gabriel()
+{
+    Point_2 c;
+    bool flag=false;
+    Delaunay::Vertex_handle v1;
+    Delaunay::Vertex_handle v2;
 
+
+        for(int i=0;i<g_points1.size();i++)
+        {
+            for(int j=0;j<g_points2.size();j++)
+            {
+            	//vertex handlers are introduced
+                v1=dt.insert(Point(g_points1.at(i)));
+                v2=dt.insert(Point(g_points2.at(j)));
+                //edge validity is checked
+                bool check=dt.is_edge(v1,v2);
+                    if(check)
+                    {
+                    	//Edges are identified
+                        edge_vect.push_back(std::make_pair(g_points1.at(i),g_points2.at(j)));
+                    }
+            }
+            g_points2.erase(g_points2.begin());
+        }
+        for(int i=0;i<edge_vect.size();i++)
+            std::cerr<<edge_vect[i].first<<" "<<edge_vect[i].second;
+        for(int i=0;i<edge_vect.size();i++)
+        {
+            Point_2 a=edge_vect[i].first;
+            Point_2 b=edge_vect[i].second;
+		
+	    //Gabriel check
+            double x1=a.x();double y1=a.y();double x2=b.x();double y2=b.y();
+            double dist=std::sqrt(std::pow(x1-x2,2)+std::pow(y1-y2,2));
+            c=Point_2((a.x()+b.x())/2,(a.y()+b.y())/2);
+            for(int k=0;k<g_points1.size();)
+            {
+                if(g_points1.at(k)==a||g_points1.at(k)==b)
+                {
+                  k++;
+                }
+                else
+                {
+                    x2=g_points1.at(k).x();
+                    y2=g_points1.at(k).y();
+                    double dist2=std::sqrt(std::pow(c.x()-x2,2)+std::pow(c.y()-y2,2));
+                    if(dist2<=dist/2)
+                    {
+                        flag=true;
+                        break;
+                    }
+                    k++;
+                }
+            }
+            if(!flag)
+                edge_vect2.push_back(std::make_pair(a,b));
+
+            flag=false;
+
+        }
+
+        std::cerr<<"Number of Gabriel Edges:"<<edge_vect2.size()<<std::endl;
+        dt.clear();
+        //std::cerr<<"cp 1"<<std::endl;
+        for(int i=0;i<edge_vect.size();i++)
+        {
+            scene.addItem(qline1[i]);
+            qline1[i]->setLine(edge_vect[i].first.x(),edge_vect[i].first.y(),edge_vect[i].second.x(),edge_vect[i].second.y());
+            qline1[i]->show();
+        }
+        //std::cerr<<"cp 2"<<std::endl;
+}
 void
 MainWindow::open(QString fileName)
 {
@@ -510,7 +638,7 @@ MainWindow::open(QString fileName)
 
 
   dt.insert(points.begin(), points.end());
-
+  compute_gabriel();
   // default cursor
   QApplication::restoreOverrideCursor();
   this->addToRecentFiles(fileName);
