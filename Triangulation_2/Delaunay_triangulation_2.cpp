@@ -29,6 +29,8 @@
 #include <QPointF>
 #include <QPen>
 #include <QGraphicsEllipseItem>
+#include <QPropertyAnimation>
+#include <QThread>
 
 // GraphicsView items and event filters (input classes)
 #include "TriangulationCircumcircle.h"
@@ -54,12 +56,20 @@ typedef CGAL::Delaunay_triangulation_2<K> Delaunay;
 
 typedef Delaunay::Point Point;
 
+typedef std::pair<double,double> pairs;
+
 // typedef CGAL::Cartesian<CGAL::Exact_rational>   kernal;
 //typedef kernal::Circle_2    circle;
 //typedef K::Circle_2         circle;
 //typedef CGAL::Arr_circle_segment_traits_2<K>   traits;
 //typedef traits::Curve_2     curve;
+
+
+
 //typedef CGAL::Arrangement_2<traits>     Arrangement;
+
+
+
 
 class MainWindow :
   public CGAL::Qt::DemosMainWindow,
@@ -73,16 +83,25 @@ private:
   QGraphicsLineItem *qline[500];
   QGraphicsLineItem *qline1[500];
   QGraphicsEllipseItem *ellipse[500];
-  QPoint *p1;
+  QGraphicsEllipseItem *move[500];
+  QTimeLine *timer[500] ;
+  QGraphicsItemAnimation *anim[500];
+
+
 
   Point_2 x,y;
   int j=0;
+  int m_size=0;
 
+  std::vector<K::Point_2> d_points;
   std::vector<Point_2> g_points1;
   std::vector<Point_2> g_points2;
+  std::set<std::pair<double,double>> m_points;
+  //std::vector<std::pair<double,double>> m_points_2;
 
   std::vector<std::pair<Point_2,Point_2>> edge_vect;
   std::vector<std::pair<Point_2,Point_2>> edge_vect2;
+  std::vector<std::pair<double,double>> vel_vect;
 
   CGAL::Qt::TriangulationGraphicsItem<Delaunay> * dgi;
   CGAL::Qt::VoronoiGraphicsItem<Delaunay> * vgi;
@@ -90,7 +109,37 @@ private:
 
 
 
+  /*QPushButton *button = new QPushButton("Button1");
+  button->show();
+  QPropertyAnimation anim(button,"geometry");
+  anim.setDuration(3000);
+  anim.setStartValue(QRect(-88,-40,100,30));
+  anim.setEndValue(QRect(-100,-50,100,30));
 
+  QPushButton button2("Button2");
+  button2.show();
+
+  QPropertyAnimation anim2(&button2,"geometry");
+  anim2.setDuration(5000);
+  anim2.setStartValue(QRect(-200,-70,100,30));
+  anim2.setEndValue(QRect(-300,-150,100,30));
+
+  QParallelAnimationGroup *animgroup=new QParallelAnimationGroup;
+  animgroup->addAnimation(&anim);
+  animgroup->addAnimation(&anim2);
+
+  QPushButton button3("Button3");
+  button3.show();
+
+  QPropertyAnimation anim3(&button2,"geometry");
+  anim3.setDuration(2000);
+  anim3.setStartValue(QRect(-250,-100,100,30));
+  anim3.setEndValue(QRect(-320,-50,100,30));
+
+  QSequentialAnimationGroup animseq;
+  animseq.addAnimation(&anim3);
+  animseq.addAnimation(animgroup);
+  animseq.start();*/
 
 
 
@@ -109,6 +158,8 @@ public Q_SLOTS:
 
   void compute_gabriel();
 
+  void clear_DS();
+
   void draw_circle(Point_2,Point_2);
 
   void on_actionMovingPoint_toggled(bool checked);
@@ -125,7 +176,11 @@ public Q_SLOTS:
 
   void on_actionInsertPoint_toggled(bool checked);
 
+  void on_actionPlay_toggled(bool checked);
+
   void on_actionInsertRandomPoints_triggered();
+
+  void on_actionVelocity_triggered();
 
   void on_actionLoadPoints_triggered();
 
@@ -137,6 +192,8 @@ public Q_SLOTS:
 
   virtual void open(QString fileName);
 
+  virtual void open_velocity(QString fileName);
+
 Q_SIGNALS:
   void changed();
 };
@@ -146,6 +203,7 @@ MainWindow::MainWindow()
   : DemosMainWindow()
 {
   setupUi(this);
+
 
   for(int i=0;i<500;i++)
   {
@@ -349,7 +407,6 @@ MainWindow::draw_circle(Point_2 c1,Point_2 c2)
     double xc=c1.x();
     double yc=c1.y();
 
-    p1=new QPoint(xc+x,yc-y);
 
     qp.drawPoint(xc+x,yc-y);
     qp.setPen(QPen(Qt::red,5,Qt::DashDotLine));
@@ -418,7 +475,7 @@ MainWindow::on_actionShowGabriel_toggled(bool checked)
             qline[i]->show();
             //c=Point_2((edge_vect2[i].first.x()+edge_vect2[i].second.x())/2,(edge_vect2[i].first.y()+edge_vect2[i].second.y())/2);
             //Draw circle: Qt way, and it works
-            double twopi=6.2830853071795865;
+            /*double twopi=6.2830853071795865;
             double rad=57.2957795130823209;
             double dist=std::sqrt(std::pow(edge_vect2[i].first.x()-edge_vect2[i].second.x(),2)+std::pow(edge_vect2[i].first.y()-edge_vect2[i].second.y(),2));
             double m=(edge_vect2[i].second.y()-edge_vect2[i].first.y())/(edge_vect2[i].second.x()-edge_vect2[i].first.x());
@@ -464,7 +521,7 @@ MainWindow::on_actionShowGabriel_toggled(bool checked)
 
             scene.addItem(ellipse[i]);
             ellipse[i]->show();
-            //draw_circle(c,edge_vect2[i].first);
+            //draw_circle(c,edge_vect2[i].first);*/
 
 
         }
@@ -472,9 +529,153 @@ MainWindow::on_actionShowGabriel_toggled(bool checked)
         for(int i=0;i<edge_vect2.size();i++)
         {
             scene.removeItem(qline[i]);
+            //scene.removeItem(ellipse[i]);
         }
+
     }
 
+}
+
+void
+MainWindow::clear_DS()
+{
+    d_points.clear();
+    g_points1.clear();
+    g_points2.clear();
+    edge_vect.clear();
+    edge_vect2.clear();
+
+}
+
+void
+MainWindow::on_actionPlay_toggled(bool checked)
+{
+
+    //Velocity is defined for every points
+    for(int i=vel_vect.size();i<edge_vect.size();i++)
+        vel_vect.push_back(std::make_pair(0,0));
+
+    if(checked)
+    {
+        m_size=0;
+        //set is introduced for storing points
+        for(int i=0;i<edge_vect.size();i++)
+        {
+            scene.removeItem(qline1[i]);
+            m_points.insert(std::make_pair(edge_vect.at(i).first.x(),edge_vect.at(i).first.y()));
+            m_points.insert(std::make_pair(edge_vect.at(i).second.x(),edge_vect.at(i).second.y()));
+
+        }
+
+        std::cerr<<"Points"<<std::endl;
+
+        //Points are plotted using ellipses
+        for(auto itr=m_points.begin();itr!=m_points.end();itr++)
+        {
+            pairs p=*itr;
+            std::cerr<<p.first<<" "<<p.second<<std::endl;
+            move[m_size]=new QGraphicsEllipseItem(p.first,p.second,1,1);
+            scene.addItem(move[m_size]);
+            m_size++;
+        }
+        /*int j=0;
+        for(int i=0;i<edge_vect.size();i++)
+        {
+            move[j]=new QGraphicsEllipseItem(edge_vect.at(i).first.x(),edge_vect.at(i).first.y(),1,1);
+            scene.addItem(move[i]);
+            move[j+1]=new QGraphicsEllipseItem(edge_vect.at(i).second.x(),edge_vect.at(i).second.y(),1,1);
+            scene.addItem(move[j+1]);
+            j=j+2;
+        }*/
+        //Animation defined
+        for(int i=0;i<m_size;i++)
+        {
+            timer[i]=new QTimeLine(5000);
+            timer[i]->setFrameRange(0,200);
+            anim[i]=new QGraphicsItemAnimation;
+            anim[i]->setItem(move[i]);
+            anim[i]->setTimeLine(timer[i]);
+            for(int j=0;j<200;++j)
+                anim[i]->setPosAt(j/200.0,QPointF(j,j));
+        }
+
+        for(int i=0;i<m_size;i++)
+            timer[i]->start();
+
+        /*QGraphicsEllipseItem *move1=new QGraphicsEllipseItem(-88,-40,1,1);
+        QGraphicsEllipseItem *move2=new QGraphicsEllipseItem(-68,-20,1,1);
+
+
+
+
+        QTimeLine *timer1=new QTimeLine(5000);
+        timer1->setFrameRange(0,200);
+
+        QTimeLine *timer2=new QTimeLine(3000);
+        timer1->setFrameRange(0,200);
+
+        QGraphicsItemAnimation *anim1=new QGraphicsItemAnimation;
+        anim1->setItem(move1);
+        anim1->setTimeLine(timer1);
+
+        QGraphicsItemAnimation *anim2=new QGraphicsItemAnimation;
+        anim2->setItem(move2);
+        anim2->setTimeLine(timer2);
+
+        for(int i=0;i<200;++i)
+            anim1->setPosAt(i/200.0,QPointF(i,i));
+
+        for(int i=0;i<200;++i)
+            anim2->setPosAt(i/200.0,QPointF(i,i));
+
+        scene.addItem(move1);
+        scene.addItem(move2);
+        view->show();
+        timer1->start();
+        timer2->start();*/
+
+        std::cerr<<"m_size: "<<m_size<<std::endl;
+    }
+    else
+    {
+
+        clear_DS();
+        //std::cerr<<"m_size: "<<m_size<<std::endl;
+        //Animation is stopped
+        for(int i=0;i<m_size;i++)
+        {
+            timer[i]->stop();
+            //std::cerr<<move[i]->x()<<" "<<move[i]->y()<<std::endl;
+            //p=new Point_2(move[i]->x(),move[i]->y());
+        }
+        int i=0;
+        //d_points is defined with updated values
+        std::cerr<<"updated point for Delaunay\n"<<std::endl;
+        for(auto itr=m_points.begin();itr!=m_points.end();itr++,i++)
+        {
+            pairs ptr=*itr;
+            //std::cerr<<p.first<<" "<<p.second<<std::endl;
+            K::Point_2 p(ptr.first+move[i]->x(),ptr.second+move[i]->y());
+            std::cerr<<p<<std::endl;
+            d_points.push_back(p);
+            g_points1.push_back(p);
+            g_points2.push_back(p);
+
+        }
+        //New Delaunauy created
+        dt.insert(d_points.begin(), d_points.end());
+        compute_gabriel();
+    }
+}
+void
+MainWindow::on_actionVelocity_triggered()
+{
+    QString fileName = QFileDialog::getOpenFileName(this,
+                            tr("Open Points file"),
+                            ".");
+    if(! fileName.isEmpty()){
+      open_velocity(fileName);
+    }
 }
 void
 MainWindow::on_actionShowVoronoi_toggled(bool checked)
@@ -555,23 +756,24 @@ MainWindow::compute_gabriel()
 
         for(int i=0;i<g_points1.size();i++)
         {
-            for(int j=0;j<g_points2.size();j++)
+            for(int jj=0;jj<g_points2.size();jj++)
             {
             	//vertex handlers are introduced
                 v1=dt.insert(Point(g_points1.at(i)));
-                v2=dt.insert(Point(g_points2.at(j)));
+                v2=dt.insert(Point(g_points2.at(jj)));
                 //edge validity is checked
                 bool check=dt.is_edge(v1,v2);
                     if(check)
                     {
                     	//Edges are identified
-                        edge_vect.push_back(std::make_pair(g_points1.at(i),g_points2.at(j)));
+                        edge_vect.push_back(std::make_pair(g_points1.at(i),g_points2.at(jj)));
                     }
             }
             g_points2.erase(g_points2.begin());
         }
+        std::cerr<<"Edges:\n"<<std::endl;
         for(int i=0;i<edge_vect.size();i++)
-            std::cerr<<edge_vect[i].first<<" "<<edge_vect[i].second;
+            std::cerr<<edge_vect[i].first<<" "<<edge_vect[i].second<<"\n";
         for(int i=0;i<edge_vect.size();i++)
         {
             Point_2 a=edge_vect[i].first;
@@ -618,6 +820,30 @@ MainWindow::compute_gabriel()
         }
         //std::cerr<<"cp 2"<<std::endl;
 }
+
+void
+MainWindow::open_velocity(QString filename)
+{
+    QApplication::setOverrideCursor(Qt::WaitCursor);
+    std::ifstream ifs(qPrintable(filename));
+    double p;
+
+    std::vector<double> vel;
+    while(ifs >> p) {
+      // ignore whatever comes after x and y
+      ifs.ignore((std::numeric_limits<std::streamsize>::max)(), '\n');
+      //points.push_back(p);
+      //vel_vect.push_back(std::make_pair(p.x(),p.y()));
+      vel.push_back(p);
+    }
+
+
+    for(int i=0;i<vel.size();)
+    {
+        vel_vect.push_back(std::make_pair(vel.at(i),vel.at(i+1)));
+        i=i+2;
+    }
+}
 void
 MainWindow::open(QString fileName)
 {
@@ -626,18 +852,18 @@ MainWindow::open(QString fileName)
   QApplication::setOverrideCursor(Qt::WaitCursor);
   std::ifstream ifs(qPrintable(fileName));
   K::Point_2 p;
-  std::vector<K::Point_2> points;
+  //std::vector<K::Point_2> points;
   while(ifs >> p) {
     // ignore whatever comes after x and y
     ifs.ignore((std::numeric_limits<std::streamsize>::max)(), '\n');
-    points.push_back(p);
+    d_points.push_back(p);
     g_points1.push_back(p);
     g_points2.push_back(p);
   }
   //int x=g_points.size();
 
 
-  dt.insert(points.begin(), points.end());
+  dt.insert(d_points.begin(), d_points.end());
   compute_gabriel();
   // default cursor
   QApplication::restoreOverrideCursor();
@@ -699,3 +925,4 @@ int main(int argc, char **argv)
 
   return app.exec();
 }
+
