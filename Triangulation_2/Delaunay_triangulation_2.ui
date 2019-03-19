@@ -52,6 +52,8 @@
    <addaction name="actionLoadPoints" />
    <addaction name="actionSavePoints" />
    <addaction name="actionShowGabriel" /> 	<!--ShowGabriel 1 -->
+   <addaction name="actionVelocity"/>
+   <addaction name="actionPlay"/>
   </widget>
   <widget class="QToolBar" name="toolBar" >
    <property name="windowTitle" >
@@ -65,7 +67,7 @@
    </attribute>
    <addaction name="actionInsertPoint" />
    <addaction name="actionMovingPoint" />
-   <addaction name="actionShowGabriel" />	<!--ShowGabriel 2 -->
+   <!--addaction name="actionShowGabriel" /-->	<!--ShowGabriel 2 -->
    <addaction name="actionCircumcenter" />
    <addaction name="actionShowConflictZone" />
    <addaction name="separator" />
@@ -89,7 +91,8 @@
     </property>
     <addaction name="separator" />
     <addaction name="actionClear" />
-    <addaction name="actionShowGabriel" />	<!--ShowGabriel 3 -->
+    <!--addaction name="actionShowGabriel" /-->	<!--ShowGabriel 3 -->
+    <!--addaction name="actionPlay" /-->
     <addaction name="actionLoadPoints" />
     <addaction name="actionSavePoints" />
     <addaction name="actionExport_SVG" />
@@ -115,7 +118,7 @@
     <addaction name="actionShowVoronoi" />
     <addaction name="separator" />
     <addaction name="actionRecenter" />
-    <addaction name="actionShowGabriel" />	<!--ShowGabriel 4 -->
+    <!--addaction name="actionShowGabriel" /-->	<!--ShowGabriel 4 -->
    </widget>
    <addaction name="menuFile" />
    <addaction name="menuEdit" />
@@ -242,6 +245,39 @@
     <string>Ctrl+V</string>
    </property>
   </action>
+  
+  <action name="actionPlay" >
+   <property name="checkable" >
+    <bool>true</bool>
+   </property>
+   <property name="checked" >
+    <bool>false</bool>
+   </property>
+   <property name="icon" >
+    <iconset resource="../icons/Triangulation_2.qrc" >
+     <normaloff>:/cgal/Triangulation_2/Voronoi_diagram_2.png</normaloff>:/cgal/Triangulation_2/Voronoi_diagram_2.png</iconset>
+   </property>
+   <property name="text" >
+    <string>Play</string>
+   </property>
+   <property name="shortcut" >
+    <string>Ctrl+V</string>
+   </property>
+  </action>
+  
+  <action name="actionVelocity" >
+   <property name="icon" >
+    <iconset resource="../icons/File.qrc" >
+     <normaloff>:/cgal/fileToolbar/fileOpen.png</normaloff>:/cgal/fileToolbar/fileOpen.png</iconset>
+   </property>
+   <property name="text" >
+    <string>Load Velocity</string>
+   </property>
+   <property name="shortcut" >
+    <string>Ctrl+V</string>
+   </property>
+  </action>
+
   <action name="actionShowDelaunay" >
    <property name="checkable" >
     <bool>true</bool>

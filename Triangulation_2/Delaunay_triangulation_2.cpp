@@ -160,6 +160,8 @@ public Q_SLOTS:
 
   void clear_DS();
 
+  void clear_DS2();
+
   void draw_circle(Point_2,Point_2);
 
   void on_actionMovingPoint_toggled(bool checked);
@@ -548,8 +550,22 @@ MainWindow::clear_DS()
 }
 
 void
+MainWindow::clear_DS2()
+{
+
+    m_points.clear();
+    for(int i=0;i<m_size;i++)
+    {
+        std::cerr<<"i="<<i<<std::endl;
+        scene.removeItem(move[i]);
+    }
+
+}
+
+void
 MainWindow::on_actionPlay_toggled(bool checked)
 {
+
 
     //Velocity is defined for every points
     for(int i=vel_vect.size();i<edge_vect.size();i++)
@@ -557,6 +573,7 @@ MainWindow::on_actionPlay_toggled(bool checked)
 
     if(checked)
     {
+        clear_DS2();
         m_size=0;
         //set is introduced for storing points
         for(int i=0;i<edge_vect.size();i++)
@@ -578,15 +595,7 @@ MainWindow::on_actionPlay_toggled(bool checked)
             scene.addItem(move[m_size]);
             m_size++;
         }
-        /*int j=0;
-        for(int i=0;i<edge_vect.size();i++)
-        {
-            move[j]=new QGraphicsEllipseItem(edge_vect.at(i).first.x(),edge_vect.at(i).first.y(),1,1);
-            scene.addItem(move[i]);
-            move[j+1]=new QGraphicsEllipseItem(edge_vect.at(i).second.x(),edge_vect.at(i).second.y(),1,1);
-            scene.addItem(move[j+1]);
-            j=j+2;
-        }*/
+
         //Animation defined
         for(int i=0;i<m_size;i++)
         {
@@ -664,7 +673,10 @@ MainWindow::on_actionPlay_toggled(bool checked)
         }
         //New Delaunauy created
         dt.insert(d_points.begin(), d_points.end());
+
         compute_gabriel();
+
+
     }
 }
 void
