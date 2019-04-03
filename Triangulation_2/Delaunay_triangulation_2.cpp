@@ -556,7 +556,6 @@ MainWindow::clear_DS2()
     m_points.clear();
     for(int i=0;i<m_size;i++)
     {
-        std::cerr<<"i="<<i<<std::endl;
         scene.removeItem(move[i]);
     }
 
@@ -604,8 +603,12 @@ MainWindow::on_actionPlay_toggled(bool checked)
             anim[i]=new QGraphicsItemAnimation;
             anim[i]->setItem(move[i]);
             anim[i]->setTimeLine(timer[i]);
-            for(int j=0;j<200;++j)
-                anim[i]->setPosAt(j/200.0,QPointF(j,j));
+            for(int j=0;j<1000;++j)
+            {
+                if(vel_vect.at(i).first!=0&&vel_vect.at(i).second!=0)
+                    anim[i]->setPosAt(j/1000.0,QPointF(this->pos().x()+vel_vect.at(i).first+j,this->pos().y()+vel_vect.at(i).second+j));
+
+            }
         }
 
         for(int i=0;i<m_size;i++)
